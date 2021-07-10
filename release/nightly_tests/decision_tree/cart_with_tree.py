@@ -1,6 +1,8 @@
 """Implementation of the CART algorithm to train decision tree classifiers."""
 import numpy as np
 import ray
+
+from ray.cluster_utils import Cluster
 from sklearn import datasets, metrics
 import time
 import os
@@ -352,11 +354,26 @@ def run_in_cluster():
 
 
 if __name__ == "__main__":
-    ray.init(address=os.environ["RAY_ADDRESS"])
-    cluster_future = run_in_cluster.remote()
-    treetime, accuracy = ray.get(cluster_future)
-    print("Tree building took", treetime, " seconds")
-    print("Test Accuracy: ", accuracy)
+# ray.init(address=os.environ["RAY_ADDRESS"])
+    cluster = Cluster()
+    print("starting cluster")
+    cluster.add_node(num_cpus=4, object_store_memory=8 * 2**30)
+    cluster.add_node(num_cpus=4, object_store_memory=8 * 2**30)
+    cluster.add_node(num_cpus=4, object_store_memory=8 * 2**30)
+    cluster.add_node(num_cpus=4, object_store_memory=8 * 2**30)
+    cluster.wait_for_nodes()
+    print("starting cluster")
+    ray.init(address=cluster.address)
+    print("starting cluster")
+    futures = []
+    for i in range(20):
+        print(f"iteration: {i}")
+        time.sleep(10)
+        futures.append(run_in_cluster.remote())
+    for f in futures:
+        treetime, accuracy = ray.get(f)
+        print("Tree building took", treetime, " seconds")
+        print("Test Accuracy: ", accuracy)
 
     with open(os.environ["TEST_OUTPUT_JSON"], "w") as f:
         f.write(json.dumps({"build_time": treetime, "success": 1}))
