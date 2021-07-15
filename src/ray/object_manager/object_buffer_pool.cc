@@ -71,6 +71,14 @@ std::pair<const ObjectBufferPool::ChunkInfo, ray::Status> ObjectBufferPool::GetC
     }
     RAY_CHECK(object_buffer.metadata->Data() ==
               object_buffer.data->Data() + object_buffer.data->Size());
+    if (object_buffer.data->Size() == 0 && object_buffer.metadata->Size() == 1 && data_size != 1) {
+      RAY_LOG(INFO)
+          << "Failed to get a chunk of the object: " << object_id
+          << ". As it has been marked as deleted.";
+      return std::pair<const ObjectBufferPool::ChunkInfo, ray::Status>(
+          errored_chunk_,
+          ray::Status::IOError("Unable to obtain object chunk, object not local."));
+    }
     RAY_CHECK(data_size == static_cast<uint64_t>(object_buffer.data->Size() +
                                                  object_buffer.metadata->Size()))
         << "Total size: " << data_size << ", data size: " << object_buffer.data->Size()
