@@ -55,6 +55,7 @@ int fake_munmap(void *, int64_t);
 #define HAVE_MORECORE 0
 #define DEFAULT_MMAP_THRESHOLD MAX_SIZE_T
 #define DEFAULT_GRANULARITY ((size_t)128U * 1024U)
+#define USE_LOCKS 1
 
 #include "ray/thirdparty/dlmalloc.c"  // NOLINT
 
